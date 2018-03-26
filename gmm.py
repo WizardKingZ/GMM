@@ -30,11 +30,13 @@ class GMM:
 		self.g_t_func = g_t_func
 		self.G_t_func = G_t_func
 		if self.G_t_func is not None and self.g_t_func is not None:
-			self.FOC = lambda x, W: inner(inner(np.mean(self.G_t_func(x, self.x_t, self.y_t, self.z_t), axis=1), W), 
+			self.FOC = lambda x, W: inner(inner(np.mean(self.G_t_func(x, self.x_t, self.y_t, self.z_t), axis=0), W),
 												 np.mean(self.g_t_func(x, self.x_t, self.y_t, self.z_t), axis=0)) 
 		self.model_type = model_type
+
 	def train(self, lag=0):
-		if self.theta_hat is None:
+		theta_hat = self.theta_hat
+		if theta_hat is None:
 			W = identity(self.n_eq)
 			if self.model_type == MODEL_TYPE.LINEAR:
 				S_xz = sample_cov(self.x_t, self.z_t)
@@ -56,8 +58,9 @@ class GMM:
 				theta_hat = inner(inv(temp), temp)
 			return theta_hat, inv(inner(inner(S_xz, W), S_xz))
 		elif self.model_type == MODEL_TYPE.NONLINEAR:
-			theta_hat = root(self.FOC, x0=ones(self.n_param), args=(W)).x
-			G_T = np.mean(self.G_t_func(theta_hat, self.x_t, self.y_t, self.z_t), axis=1)
+			if theta_hat is None:
+				theta_hat = root(self.FOC, x0=ones(self.n_param), args=(W)).x
+			G_T = np.mean(self.G_t_func(theta_hat, self.x_t, self.y_t, self.z_t), axis=0)
 			return theta_hat, inv(inner(inner(G_T, W), G_T))
 
 
