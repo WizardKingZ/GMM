@@ -1,13 +1,17 @@
-import numpy as np
+from numpy import tile, mean, dot, diag, sqrt
+from scipy.stats import t
 
 def auto_cov(ts, lag=0, ddof=0):
 	"""
 	calculate auto covariance of time series ts
 	"""
-	T = ts.shape[0] - ddof
-	mean = np.mean(ts, axis=0)
-	ts = ts - np.tile(mean, [T,1])
-	return 1./T*np.inner(ts[:T-lag, :].T, ts[lag:, :].T)
+	T = ts.shape[0]
+	means = mean(ts, axis=0)
+	if len(ts.shape) == 1:
+		ts = ts - means
+	else:
+		ts = ts - tile(means, [T,1])
+	return 1./(T-ddof)*dot(ts[:T-lag, ].T, ts[lag:, ])
 
 def newey_west(ts, lag=4):
 	"""
@@ -21,9 +25,20 @@ def newey_west(ts, lag=4):
 	return S
 
 def sample_cov(x, y, ddof=0):
-	T_x = x.shape[0] - ddof
-	mean = np.mean(x, axis=0)
-	x = x - np.tile(mean, [T_x,1])
-	mean = np.mean(y, axis=0)
-	y = y - np.tile(mean, [T_x,1])
-	return 1./T_x*inner(x.T , y.T)
+	T_x = x.shape[0]
+	means = mean(x, axis=0)
+	if len(x.shape) == 1:
+		x = x - means
+	else:
+		x = x - tile(means, [T_x,1])
+	means = mean(y, axis=0)
+	if len(y.shape) == 1:
+		y = y - means
+	else:
+		y = y - tile(means, [T_x,1])
+	return 1./(T_x-ddof)*dot(x.T , y)
+
+def t_test(estimate, cov, nobs):
+	tstats = estimate/sqrt(1./nobs*diag(cov))
+	significance = [1- t.cdf(abs(each), df=nobs) for each in tstats]
+	return tstats, significance
