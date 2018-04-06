@@ -1,5 +1,5 @@
-from numpy import tile, mean, dot, diag, sqrt
-from scipy.stats import t
+from numpy import tile, mean, dot, diag, sqrt, cov
+from scipy.stats import t, chi2
 
 def auto_cov(ts, lag=0, ddof=0):
 	"""
@@ -11,7 +11,7 @@ def auto_cov(ts, lag=0, ddof=0):
 		ts = ts - means
 	else:
 		ts = ts - tile(means, [T,1])
-	return 1./(T-ddof)*dot(ts[:T-lag, ].T, ts[lag:, ])
+	return 1./(T-ddof)*dot(ts[lag:, ].T, ts[:T-lag, ])
 
 def newey_west(ts, lag=4):
 	"""
@@ -42,3 +42,8 @@ def t_test(estimate, cov, nobs):
 	tstats = estimate/sqrt(1./nobs*diag(cov))
 	significance = [1- t.cdf(abs(each), df=nobs) for each in tstats]
 	return tstats, significance
+
+def wald_test(estimate, cov, nobs):
+	stats = nobs*estimate**2/diag(cov)
+	significance = [1-chi2.cdf(each, df=1) for each in stats]
+	return stats, significance 

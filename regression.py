@@ -16,7 +16,10 @@ class OLS(BaseRegressionEstimator):
 		self._robust = robust
 		self._intercept = intercept
 		self._demeaned = demeaned
-		self._nparam = X.shape[1]
+		try:
+			self._nparam = X.shape[1]
+		except:
+			self._nparam = 1
 		if self._demeaned:
 			self.X = self.X - repeat(mean(self.X, axis=0), self._nobs).reshape(self.X.shape)
 			self.y = self.y - repeat(mean(self.y, axis=0), self._nobs).reshape(self.y.shape)
